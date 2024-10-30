@@ -42,7 +42,7 @@ module sync_fifo_native #(
     `endif
     logic [ADDR_WIDTH:0]    wr_ptr;
     logic [ADDR_WIDTH:0]    rd_ptr;
-    logic [DATA_WIDTH-1:0]  rd_data_r;
+    logic [DATA_WIDTH-1:0]  rd_data_r='0;
 
     //fifo写操作逻辑，数据会在写使能有效后一个时钟周期被写入fifo，如果fifo已满则禁止写操作
     always_ff @( posedge clk or posedge rst ) begin : write_ptr
@@ -81,17 +81,12 @@ module sync_fifo_native #(
     `else
         generate
             if (BUFFER_OUT_EN) begin
-                always_ff @( posedge clk or posedge rst ) begin : read
-                    if (rst) begin
-                        rd_data_r <= '0;
-                    end
-                    else begin
-                        rd_data_r <= rd_en && !empty? mem[rd_ptr[ADDR_WIDTH-1:0]] : '0;
-                    end
+                always_ff @( posedge clk) begin : read_data
+                    rd_data_r <= rd_en && !empty? mem[rd_ptr[ADDR_WIDTH-1:0]] : '0;
                 end
             end
             else begin
-                assign rd_data_r = mem[rd_ptr[ADDR_WIDTH-1:0]];
+                assign rd_data_r = rd_en && !empty? mem[rd_ptr[ADDR_WIDTH-1:0]] : '0;
             end
         endgenerate
     `endif
